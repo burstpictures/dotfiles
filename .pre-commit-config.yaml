@@ -1,0 +1,15 @@
+# .pre-commit-config.yaml
+repos:
+  # Hook for Gitleaks secret scanning
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.0 # Check for the latest stable version
+    hooks:
+      - id: gitleaks
+
+  # Optional: Add hooks for common cleanup (good practice)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0 # Use the latest stable version
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
