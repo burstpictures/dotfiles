@@ -1,0 +1,134 @@
+## Basic Settings
+set hidden true
+set ignorecase true
+set icons true
+set rulerfmt "%d |%a |%p |\033[7;31m %m \033[0m |\033[7;33m %c \033[0m |\033[7;35m %s \033[0m |\033[7;34m %f \033[0m |%i/%t"
+set info size
+
+# Show user@host, dir, file, and last action
+set promptfmt "\033[32;1m%u@%h\033[0m:\033[34;1m%w\033[0m \033[1m%f\033[0m"
+
+# Three-pane layout with enhancements
+set ratios 2:3:2
+set drawbox true
+set roundbox true
+set borderfmt "\033[1;34m"
+
+# Make the active pane/line pop
+set cursoractivefmt "\033[7;33m"     # reverse + yellow
+set cursorparentfmt "\033[7m"         # parent pane cursor
+set cursorpreviewfmt "\033[4m"        # underline in preview
+
+## Custom Functions
+# create a dir and file with prompt 
+cmd touch %touch "$@"
+cmd mkdir %mkdir "$@"
+
+# Trash selected files and folders
+cmd trash %trash put -- $fx
+
+# Restore last trashed item, handle same names and select the restored item
+cmd restore-last ${{
+    # Get the path of index 0 before restoring
+    target="$(trash -t never list | awk '$1 == 0 {print $NF}')"
+
+    # Run the restore
+    output="$(trash restore -r 0 -f 2>&1 || true)"
+
+    if echo "$output" | grep -q "RestoreCollision"; then
+        path="$(echo "$output" | sed -n 's/.*path: \"\([^\"]*\)\".*/\1/p')"
+        lf -remote "send $id set promptfmt \"\033[1;34mCURRENT:\033[0m %w %f | \033[1;31m❌ Restore failed:\033[0m file already exists at \033[33m$path\033[0m Rename or delete it, then try again.\""
+
+    elif [ -n "$output" ]; then
+        lf -remote "send $id set promptfmt \"\033[1;34mCURRENT:\033[0m %w %f | \033[1;31m❌ Restore failed:\033[0m $output\""
+
+    else
+        if [ -n "$target" ]; then
+            sel="$(printf '%s' "$target" | sed 's/\\/\\\\/g; s/\"/\\\\\"/g')"
+            # Jump to directory and select file
+            lf -remote "send $id cd \"$(dirname "$sel")\""
+            lf -remote "send $id select \"$sel\""
+            lf -remote "send $id set promptfmt \"\033[1;34mCURRENT:\033[0m %w %f | \033[1;32m✅ Restored:\033[0m \033[36m$target\033[0m\""
+        else
+            lf -remote "send $id set promptfmt \"\033[1;34mCURRENT:\033[0m %w %f | \033[1;32m✅ Restored last file (path unknown)\033[0m\""
+        fi
+    fi
+
+     # Reset promptfmt after 10 seconds
+    (
+      sleep 10
+      lf -remote "send $id set promptfmt \"\033[32;1m%u@%h\033[0m:\033[34;1m%w\033[0m \033[1m%f\033[0m\""
+    ) &
+}}
+
+# Restore interactively from trash
+cmd restore-menu $trash restore
+
+# Archive bindings
+cmd unarchive ${{
+  case "$f" in
+      *.zip) unzip "$f" ;;
+      *.rar) unrar x "$f" ;;
+      *.tar.gz) tar -xzvf "$f" ;;
+      *.tar.bz2) tar -xjvf "$f" ;;
+      *.tar) tar -xvf "$f" ;;
+      *.7z) 7z e "$f" ;;
+      *) echo "Unsupported format" ;;
+  esac
+}}
+
+cmd fzf_jump ${{
+    res="$(find . -maxdepth 1 | fzf --reverse --header='Jump to location')"
+    if [ -n "$res" ]; then
+        if [ -d "$res" ]; then
+            cmd="cd"
+        else
+            cmd="select"
+        fi
+        res="$(printf '%s' "$res" | sed 's/\\/\\\\/g;s/"/\\"/g')"
+        lf -remote "send $id $cmd \"$res\""
+    fi
+}}
+map <c-f> :fzf_jump
+
+cmd fzf_search ${{
+    RG_PREFIX="rg --column --line-number --no-heading --color=always --smart-case "
+    res="$(
+        FZF_DEFAULT_COMMAND="$RG_PREFIX ''" \
+            fzf --bind "change:reload:$RG_PREFIX {q} || true" \
+            --ansi --layout=reverse --header 'Search in files' \
+            | cut -d':' -f1 | sed 's/\\/\\\\/g;s/"/\\"/g'
+    )"
+    [ -n "$res" ] && lf -remote "send $id select \"$res\""
+}}
+map <c-g> :fzf_search
+
+
+# Bindings
+map m
+map d
+#map cf $dotbare fadd -f
+
+# Basic Functions
+map <esc> quit
+map . set hidden!
+map ab $bat -- "$f"
+map ac $less -R -- "$f"
+map au unarchive
+map p :paste; clear
+map x cut
+map y copy
+map R reload
+map md push :mkdir<space>
+map mf push :touch<space>
+map C clear
+map dD trash
+map du :restore-last
+map dr :restore-menu
+
+
+# Movement
+map gc cd ~/dotfiles
+map gb cd ~/.local/bin
+map gf cd ~/.local/share/fonts
+#map gr cd ~/repos
