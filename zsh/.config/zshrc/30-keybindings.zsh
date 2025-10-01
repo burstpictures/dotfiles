@@ -1,29 +1,32 @@
 # --- Keybindings ---
 bindkey -e   # emacs-style
 
-# --- fzf integration ---
+# --- FZF Activation (Universal) ---
 
-# Exclude noisy dirs when searching
-FZF_EXCLUDES="--exclude .git --exclude .cursor --exclude .cursor-server --exclude .cache --exclude .ssh"
-
-# Ctrl-T → search files + dirs
-export FZF_CTRL_T_COMMAND="fdfind --hidden --type f --type d $FZF_EXCLUDES"
-
-# Alt-C → search only dirs
-export FZF_ALT_C_COMMAND="fdfind --hidden --type d $FZF_EXCLUDES"
-
-# Ctrl-R → search history (fzf-enhanced)
-export FZF_CTRL_R_OPTS="--sort --exact --height=40% --border"
-
-# Global default options (no preview)
-export FZF_DEFAULT_OPTS="--height=40% --border"
-
-# Enable FZF keybindings
-if [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ]; then
-  source /usr/share/doc/fzf/examples/key-bindings.zsh
+# Check if fzf command is available
+if command -v fzf > /dev/null; then
+    # Sources the necessary key-bindings and completion functions directly.
+    # This works on nearly all systems (macOS, Debian, Fedora) that have FZF >= 0.48.0.
+    source <(fzf --zsh)
 fi
 
-# Enable FZF completion
-if [ -f /usr/share/doc/fzf/examples/completion.zsh ]; then
-  source /usr/share/doc/fzf/examples/completion.zsh
+# --- FZF Command Overrides (Use 'fd' instead of 'find') ---
+
+# Check for the existence of the faster 'fd' utility (installed as 'fdfind' on some systems)
+# We will use 'fd' directly for cleaner configuration.
+if command -v fd > /dev/null; then
+    FZF_EXCLUDES="--hidden --exclude .git --exclude .cursor --exclude .cache --exclude .ssh"
+
+    # Ctrl-T: Search files + directories (using fd)
+    export FZF_CTRL_T_COMMAND="fd --type f --type d $FZF_EXCLUDES"
+
+    # Alt-C: Search only directories (using fd)
+    export FZF_ALT_C_COMMAND="fd --type d --hidden --follow --exclude .git"
+
+    # Now that FZF is sourced, set your custom options:
+    export FZF_CTRL_R_OPTS="--sort --exact --height=40% --border"
+    export FZF_DEFAULT_OPTS="--height=40% --border"
+else
+    # Fallback to slower find command if fd/fdfind is not installed
+    export FZF_CTRL_T_COMMAND="find . -path '*/\.*' -prune -o -type f -print -o -type d -print | sed 's@^\./@@' | cut -b3-"
 fi

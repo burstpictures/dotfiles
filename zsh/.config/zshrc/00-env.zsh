@@ -1,18 +1,19 @@
 # --- PATH ---
-
- # Homebrew
-  eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" 
- # Add personal scripts (only if not already in PATH)
-  case ":$PATH:" in
+# # Homebrew
+if command -v brew &> /dev/null; then
+    eval "$($(brew --prefix)/bin/brew shellenv)"
+fi
+# Add personal scripts (only if not already in PATH)
+case ":$PATH:" in
     *:"$HOME/.local/bin":*) ;;
     *) export PATH="$HOME/.local/bin:$PATH" ;;
-  esac
+esac
 
- # --- Pager ---
-  export PAGER="less"
-  export LESS="-R"
+# --- Pager ---
+export PAGER="less"
+export LESS="-R"
 
- # Environment defaults
-  umask 027
-  export EDITOR="nvim"
-  export VISUAL="nvim"
+# Environment defaults
+umask 027
+export EDITOR="nvim"
+export VISUAL="nvim"
