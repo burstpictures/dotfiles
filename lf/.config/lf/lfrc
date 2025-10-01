@@ -20,7 +20,7 @@ set cursorparentfmt "\033[7m"         # parent pane cursor
 set cursorpreviewfmt "\033[4m"        # underline in preview
 
 ## Custom Functions
-# create a dir and file with prompt 
+# create a dir and file with prompt
 cmd touch %touch "$@"
 cmd mkdir %mkdir "$@"
 
@@ -130,5 +130,4 @@ map dr :restore-menu
 # Movement
 map gc cd ~/dotfiles
 map gb cd ~/.local/bin
-map gf cd ~/.local/share/fonts
-#map gr cd ~/repos
+map gd cd /volume3/docker
