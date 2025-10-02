@@ -27,6 +27,7 @@ fi
 # batcat as bat
 if command -v batcat >/dev/null 2>&1; then
   alias bat="batcat"
+  alias subat="sudo batcat"
 fi
 
 # lazygit as lzg
@@ -38,5 +39,3 @@ fi
 if command -v lazydocker >/dev/null 2>&1; then
   alias lzd="lazydocker"
 fi
-
-
