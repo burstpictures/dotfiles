@@ -28,6 +28,9 @@ fi
 if command -v batcat >/dev/null 2>&1; then
   alias bat="batcat"
   alias subat="sudo batcat"
+elif command -v bat >/dev/null 2>&1; then
+  alias bat="bat"
+  alias subat="sudo bat"
 fi
 
 # lazygit as lzg
